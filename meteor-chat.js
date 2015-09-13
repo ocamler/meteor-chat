@@ -6,9 +6,16 @@ if (Meteor.isClient) {
     passwordSignupFields: 'USERNAME_ONLY'
   });
 
-  Meteor.subscribe("rooms");
+  var rooms = Meteor.subscribe("rooms");
   Meteor.subscribe("messages");
-  Session.setDefault("roomname", "Meteor");
+
+  $(window).bind('hashchange', function(){
+    var room = (window.location.hash).substr(1);
+    if ($.trim(room).length && !Rooms.find({'roomname': room}).count()) {
+      Rooms.insert({roomname: room}); // create room if it doesn't exist
+    }
+    Session.set("roomname", room);
+  });
 
   Template.input.events({
     'click .sendMsg': function(e) {
@@ -32,7 +39,7 @@ if (Meteor.isClient) {
     messages: function() {
       return Messages.find({room: Session.get("roomname")}, {sort: {ts: -1}});
     },
-	roomname: function() {
+    roomname: function() {
       return Session.get("roomname");
     }
   });
@@ -45,7 +52,20 @@ if (Meteor.isClient) {
 
   Template.rooms.events({
     'click li': function(e) {
-      Session.set("roomname", e.target.innerText);
+      window.location.hash = e.target.innerText;
+    },
+    'keyup #newRoom': function(e) {
+      if (e.keyCode == 13) { // return
+        $("#newRoomSubmit").click();
+      }
+    },
+    'click #newRoomSubmit': function(e) {
+      var room = $.trim($("#newRoom").val());
+      if (room.length) {
+        window.location.hash = room;
+        $("#newRoom").val('');
+      }
+      e.preventDefault(); // prevent hash from changing any further
     }
   });
   
@@ -56,7 +76,7 @@ if (Meteor.isClient) {
   });
   
   Template.room.helpers({
-	roomstyle: function() {
+    roomstyle: function() {
       return Session.equals("roomname", this.roomname) ? "font-weight: bold" : "";
     }
   });
@@ -66,12 +86,44 @@ if (Meteor.isClient) {
       return Meteor.release;
     }
   });
+
+  Meteor.autorun(function () {
+    if (rooms.ready()) {
+      // figure out which room to start in
+      var room = (window.location.hash).substr(1);
+      if (room && Rooms.find({'roomname': room}).count()) {
+        Session.setDefault("roomname", room);
+      } else {
+        Session.setDefault("roomname", "Meteor"); // default
+      }
+    }
+  });
+
+  Meteor.subscribe("userStatus");
+
+  Template.users.helpers({
+    online: function() {
+      return Meteor.users.find({ "status.online": true });
+    }
+  });
+
+  Template.userPill.helpers({
+    labelClass: function() {
+      if (this.status.idle)
+        return "label-warning";
+      else if (this.status.online)
+        return "label-success";
+      else
+        return "label-default";
+    }
+  });
 }
 
 if (Meteor.isServer) {
   Meteor.startup(function () {
-    Messages.remove({});
-    Rooms.remove({});
+    // Don't automatically wipe previous messages on restart
+    //Messages.remove({});
+    //Rooms.remove({});
     if (Rooms.find().count() === 0) {
       ["Meteor", "JavaScript", "Reactive", "MongoDB"].forEach(function(r) {
         Rooms.insert({roomname: r});
@@ -81,13 +133,18 @@ if (Meteor.isServer) {
   
   Rooms.deny({
     insert: function (userId, doc) {
-      return true;
+      return (userId === null);
     },
     update: function (userId, doc, fieldNames, modifier) {
       return true;
     },
     remove: function (userId, doc) {
       return true;
+    }
+  });
+  Rooms.allow({
+    insert: function (userId, doc) {
+      return (userId !== null);
     }
   });
   Messages.deny({
@@ -112,5 +169,9 @@ if (Meteor.isServer) {
   });
   Meteor.publish("messages", function () {
     return Messages.find({}, {sort: {ts: -1}});
+  });
+
+  Meteor.publish("userStatus", function() {
+    return Meteor.users.find({ "status.online": true }, { fields: { "username": 1, "status": 1 } });
   });
 }

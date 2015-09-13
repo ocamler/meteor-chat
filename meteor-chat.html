@@ -33,8 +33,13 @@
             <div class="span8 well">
                 {{> messages}}
             </div>
-            <div class="span4 well">
-                {{> rooms}}
+            <div class="span4">
+                <div class="well">
+                    {{> rooms}}
+                </div>
+                <div class="well">
+                    {{> users}}
+                </div>
             </div>
         </div>
         {{else}}
@@ -54,7 +59,7 @@
 
 <template name="messages">
     <h4>Room: {{roomname}}</h4>
-    <div id="messages" style="background-color: #ffffff; border: 1px solid darkgray; max-height: 200px; overflow: auto">
+    <div id="messages" style="background-color: #ffffff; border: 1px solid darkgray; overflow: auto;">
         {{#each messages}}
             {{> message}}
         {{/each}}
@@ -72,8 +77,22 @@
         {{> room}}
     {{/each}}
     </ul>
+    <input type="text" placeholder="New Room" id="newRoom">
+    <a id="newRoomSubmit" class="btn btn-default btn-sm" href="#" role="button">Create</a>
 </template>
 
 <template name="room">
     <li style="cursor: pointer; {{roomstyle}}">{{roomname}}</li>
 </template>
+
+<template name="users">
+    <h4>Users online:</h4>
+    {{#each online}}
+        {{> userPill}}
+    {{/each}}&nbsp;&nbsp;
+</template>
+
+<template name="userPill">
+    <span class="label {{labelClass}}">{{username}}</span>
+</template>
+
