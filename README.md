@@ -3,12 +3,14 @@ MeteorChat
 
 ## ocamler's fork:
 
-Goals here are to add some subtle improvements:
+The goals here are to add some subtle improvements:
 
-* indicate who's connected, thanks to `mizzao:user-status`
-* save history of messages even after restart
-* drive room switching by window.location.hash value
-* allow users to create new rooms on the fly
+* indicate who's connected, thanks to `mizzao:user-status` \[**DONE**\]
+* save history of messages even after restart \[**DONE**\]
+* drive room switching by window.location.hash value \[**DONE**\]
+* allow users to create new rooms on the fly \[**DONE**\]
+* make the app mobile-friendly
+* add an admin panel to log, archive, download and purge old posts
 
 ## dasniko's original:
 
